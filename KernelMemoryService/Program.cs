@@ -15,6 +15,9 @@ builder.Configuration.AddJsonFile("appsettings.local.json", optional: true, relo
 
 // Add services to the container.
 var settings = builder.Configuration.GetSection<AzureOpenAISettings>("AzureOpenAI")!;
+builder.Services.ConfigureAndGet<AppSettings>(builder.Configuration, nameof(AppSettings));
+
+builder.Services.AddMemoryCache();
 
 var kernelBuilder = builder.Services.AddKernel()
     .AddAzureOpenAIChatCompletion(settings.ChatCompletion.Deployment, settings.ChatCompletion.Endpoint, settings.ChatCompletion.ApiKey);
@@ -55,7 +58,9 @@ var kernelMemory = new KernelMemoryBuilder(builder.Services)
     .Build<MemoryService>();  // Asynchronous memory with pipelines.
 
 builder.Services.AddSingleton<IKernelMemory>(kernelMemory);
-builder.Services.AddSingleton<ApplicationMemoryService>();
+
+builder.Services.AddScoped<ChatService>();
+builder.Services.AddScoped<ApplicationMemoryService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -95,7 +100,7 @@ documentsApiGroup.MapPost("upload", async (IFormFile file, ApplicationMemoryServ
 {
     documentId = await memory.ImportAsync(file.OpenReadStream(), file.FileName, documentId);
     var uri = linkGenerator.GetPathByName("GetDocumentStatus", new { documentId });
-    return TypedResults.Accepted(uri, new { documentId });
+    return TypedResults.Accepted(uri, new UploadDocumentResponse(documentId));
 })
 .DisableAntiforgery()
 .WithOpenApi();
@@ -122,7 +127,7 @@ documentsApiGroup.MapDelete("{documentId}", async (string documentId, Applicatio
 
 documentsApiGroup.MapPost("ask", async Task<Results<Ok<MemoryResponse>, NotFound>> (Question question, ApplicationMemoryService memory) =>
 {
-    var response = await memory.AskQuestionAsync(question.Text);
+    var response = await memory.AskQuestionAsync(question);
     if (response is null)
     {
         return TypedResults.NotFound();

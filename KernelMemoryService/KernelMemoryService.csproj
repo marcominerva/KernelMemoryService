@@ -7,10 +7,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="KernelMemory.MemoryStorage.SqlServer" Version="1.1.4" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.1" />
 		<PackageReference Include="Microsoft.KernelMemory.Core" Version="0.26.240121.1" />
-		<PackageReference Include="Microsoft.KernelMemory.SemanticKernelPlugin" Version="0.26.240121.1" />
 		<PackageReference Include="Microsoft.SemanticKernel" Version="1.2.0" />
 		<PackageReference Include="MinimalHelpers.OpenApi" Version="2.0.3" />
 		<PackageReference Include="MinimalHelpers.Routing" Version="2.0.3" />
