@@ -14,33 +14,33 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true);
 
 // Add services to the container.
-var settings = builder.Configuration.GetSection<AzureOpenAISettings>("AzureOpenAI")!;
-builder.Services.ConfigureAndGet<AppSettings>(builder.Configuration, nameof(AppSettings));
+var aiSettings = builder.Configuration.GetSection<AzureOpenAISettings>("AzureOpenAI")!;
+var appSettings = builder.Services.ConfigureAndGet<AppSettings>(builder.Configuration, nameof(AppSettings))!;
 
 builder.Services.AddMemoryCache();
 
 var kernelBuilder = builder.Services.AddKernel()
-    .AddAzureOpenAIChatCompletion(settings.ChatCompletion.Deployment, settings.ChatCompletion.Endpoint, settings.ChatCompletion.ApiKey);
+    .AddAzureOpenAIChatCompletion(aiSettings.ChatCompletion.Deployment, aiSettings.ChatCompletion.Endpoint, aiSettings.ChatCompletion.ApiKey);
 
 var kernelMemory = new KernelMemoryBuilder(builder.Services)
     .WithAzureOpenAITextGeneration(new()
     {
-        APIKey = settings.ChatCompletion.ApiKey,
-        Deployment = settings.ChatCompletion.Deployment,
-        Endpoint = settings.ChatCompletion.Endpoint,
+        APIKey = aiSettings.ChatCompletion.ApiKey,
+        Deployment = aiSettings.ChatCompletion.Deployment,
+        Endpoint = aiSettings.ChatCompletion.Endpoint,
         APIType = AzureOpenAIConfig.APITypes.ChatCompletion,
         Auth = AzureOpenAIConfig.AuthTypes.APIKey
     })
     .WithAzureOpenAITextEmbeddingGeneration(new()
     {
-        APIKey = settings.Embedding.ApiKey,
-        Deployment = settings.Embedding.Deployment,
-        Endpoint = settings.Embedding.Endpoint,
+        APIKey = aiSettings.Embedding.ApiKey,
+        Deployment = aiSettings.Embedding.Deployment,
+        Endpoint = aiSettings.Embedding.Endpoint,
         APIType = AzureOpenAIConfig.APITypes.EmbeddingGeneration,
         Auth = AzureOpenAIConfig.AuthTypes.APIKey,
     })
-    .WithSimpleFileStorage(@"D:\Memory\_files")
-    .WithSimpleVectorDb(@"D:\Memory\_vectors")
+    .WithSimpleFileStorage(appSettings.StoragePath)
+    .WithSimpleVectorDb(appSettings.VectorDbPath)
     .WithSearchClientConfig(new()
     {
         EmptyAnswer = "I'm sorry, I haven't found any relevant information that can be used to answer your question",
@@ -53,8 +53,8 @@ var kernelMemory = new KernelMemoryBuilder(builder.Services)
         MaxTokensPerLine = 300,
         OverlappingTokens = 100
     })
-    // Configure the asynchronous memory.    
-    .WithSimpleQueuesPipeline(@"D:\Memory\_queues")
+    // Configure the asynchronous memory.
+    .WithSimpleQueuesPipeline(appSettings.QueuePath)
     .Build<MemoryService>();  // Asynchronous memory with pipelines.
 
 builder.Services.AddSingleton<IKernelMemory>(kernelMemory);
