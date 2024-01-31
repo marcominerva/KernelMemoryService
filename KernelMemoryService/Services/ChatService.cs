@@ -10,7 +10,6 @@ public class ChatService(IMemoryCache cache, IChatCompletionService chatCompleti
     {
         var chat = new ChatHistory(cache.Get<ChatHistory?>(conversationId) ?? []);
 
-        // Reformulate the following question taking into account the context of the chat to perform keyword search and embeddings:
         var embeddingQuestion = $"""
             Reformulate the following question taking into account the context of the chat to perform embeddings search:
             ---

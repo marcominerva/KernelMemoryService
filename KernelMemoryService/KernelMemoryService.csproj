@@ -13,7 +13,7 @@
 		<PackageReference Include="MinimalHelpers.OpenApi" Version="2.0.3" />
 		<PackageReference Include="MinimalHelpers.Routing" Version="2.0.3" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
-		<PackageReference Include="TinyHelpers.AspNetCore" Version="3.0.4" />
+		<PackageReference Include="TinyHelpers.AspNetCore" Version="3.0.5" />
 	</ItemGroup>
 
 </Project>

@@ -19,9 +19,6 @@ var appSettings = builder.Services.ConfigureAndGet<AppSettings>(builder.Configur
 
 builder.Services.AddMemoryCache();
 
-var kernelBuilder = builder.Services.AddKernel()
-    .AddAzureOpenAIChatCompletion(aiSettings.ChatCompletion.Deployment, aiSettings.ChatCompletion.Endpoint, aiSettings.ChatCompletion.ApiKey);
-
 var kernelMemory = new KernelMemoryBuilder(builder.Services)
     .WithAzureOpenAITextGeneration(new()
     {
@@ -59,10 +56,13 @@ var kernelMemory = new KernelMemoryBuilder(builder.Services)
 
 builder.Services.AddSingleton<IKernelMemory>(kernelMemory);
 
+// Semantical Kernel is used to reformulate questions taking into account all the previous interactions, so that embeddings can be generate more accurately.
+var kernelBuilder = builder.Services.AddKernel()
+    .AddAzureOpenAIChatCompletion(aiSettings.ChatCompletion.Deployment, aiSettings.ChatCompletion.Endpoint, aiSettings.ChatCompletion.ApiKey);
+
 builder.Services.AddScoped<ChatService>();
 builder.Services.AddScoped<ApplicationMemoryService>();
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
