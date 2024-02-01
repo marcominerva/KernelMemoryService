@@ -20,14 +20,6 @@ var appSettings = builder.Services.ConfigureAndGet<AppSettings>(builder.Configur
 builder.Services.AddMemoryCache();
 
 var kernelMemory = new KernelMemoryBuilder(builder.Services)
-    .WithAzureOpenAITextGeneration(new()
-    {
-        APIKey = aiSettings.ChatCompletion.ApiKey,
-        Deployment = aiSettings.ChatCompletion.Deployment,
-        Endpoint = aiSettings.ChatCompletion.Endpoint,
-        APIType = AzureOpenAIConfig.APITypes.ChatCompletion,
-        Auth = AzureOpenAIConfig.AuthTypes.APIKey
-    })
     .WithAzureOpenAITextEmbeddingGeneration(new()
     {
         APIKey = aiSettings.Embedding.ApiKey,
@@ -35,6 +27,14 @@ var kernelMemory = new KernelMemoryBuilder(builder.Services)
         Endpoint = aiSettings.Embedding.Endpoint,
         APIType = AzureOpenAIConfig.APITypes.EmbeddingGeneration,
         Auth = AzureOpenAIConfig.AuthTypes.APIKey,
+    })
+    .WithAzureOpenAITextGeneration(new()
+    {
+        APIKey = aiSettings.ChatCompletion.ApiKey,
+        Deployment = aiSettings.ChatCompletion.Deployment,
+        Endpoint = aiSettings.ChatCompletion.Endpoint,
+        APIType = AzureOpenAIConfig.APITypes.ChatCompletion,
+        Auth = AzureOpenAIConfig.AuthTypes.APIKey
     })
     .WithSimpleFileStorage(appSettings.StoragePath)
     .WithSimpleVectorDb(appSettings.VectorDbPath)

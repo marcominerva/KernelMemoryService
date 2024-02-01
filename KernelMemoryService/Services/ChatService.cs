@@ -42,7 +42,7 @@ public class ChatService(IMemoryCache cache, IChatCompletionService chatCompleti
     {
         if (chat.Count > appSettingsOptions.Value.MessageLimit)
         {
-            chat = new ChatHistory(chat.Take(appSettingsOptions.Value.MessageLimit));
+            chat = new ChatHistory(chat.TakeLast(appSettingsOptions.Value.MessageLimit));
         }
 
         cache.Set(conversationId, chat);
