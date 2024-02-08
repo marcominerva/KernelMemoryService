@@ -103,7 +103,13 @@ documentsApiGroup.MapPost("upload", async (IFormFile file, ApplicationMemoryServ
     return TypedResults.Accepted(uri, new UploadDocumentResponse(documentId));
 })
 .DisableAntiforgery()
-.WithOpenApi();
+.WithOpenApi(operation =>
+{
+    var documentId = operation.Parameters.First(p => p.Name == "documentId");
+    documentId.Description = "The unique identifier of the document. If not provided, a new one will be generated. If you specify an existing documentId, the document will be overridden.";
+
+    return operation;
+});
 
 documentsApiGroup.MapGet("{documentId}/status", async Task<Results<Ok<DataPipelineStatus>, NotFound>> (string documentId, ApplicationMemoryService memory) =>
 {
