@@ -8,7 +8,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.1" />
-		<PackageReference Include="Microsoft.KernelMemory.Core" Version="0.27.240205.2" />
+		<PackageReference Include="Microsoft.KernelMemory.Core" Version="0.27.240207.1" />
 		<PackageReference Include="Microsoft.SemanticKernel" Version="1.3.0" />
 		<PackageReference Include="MinimalHelpers.OpenApi" Version="2.0.3" />
 		<PackageReference Include="MinimalHelpers.Routing" Version="2.0.3" />
