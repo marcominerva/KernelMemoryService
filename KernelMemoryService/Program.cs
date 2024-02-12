@@ -96,9 +96,9 @@ if (app.Environment.IsDevelopment())
 
 var documentsApiGroup = app.MapGroup("/api/documents");
 
-documentsApiGroup.MapPost("upload", async (IFormFile file, ApplicationMemoryService memory, LinkGenerator linkGenerator, string? documentId = null) =>
+documentsApiGroup.MapPost(string.Empty, async (IFormFile file, ApplicationMemoryService memory, LinkGenerator linkGenerator, string? documentId = null, string? index = null) =>
 {
-    documentId = await memory.ImportAsync(file.OpenReadStream(), file.FileName, documentId);
+    documentId = await memory.ImportAsync(file.OpenReadStream(), file.FileName, documentId, index);
     var uri = linkGenerator.GetPathByName("GetDocumentStatus", new { documentId });
     return TypedResults.Accepted(uri, new UploadDocumentResponse(documentId));
 })
@@ -106,14 +106,17 @@ documentsApiGroup.MapPost("upload", async (IFormFile file, ApplicationMemoryServ
 .WithOpenApi(operation =>
 {
     var documentId = operation.Parameters.First(p => p.Name == "documentId");
+    var index = operation.Parameters.First(p => p.Name == "index");
+
     documentId.Description = "The unique identifier of the document. If not provided, a new one will be generated. If you specify an existing documentId, the document will be overridden.";
+    index.Description = "The index to use for the document. If not provided, the default index will be used ('default').";
 
     return operation;
 });
 
-documentsApiGroup.MapGet("{documentId}/status", async Task<Results<Ok<DataPipelineStatus>, NotFound>> (string documentId, ApplicationMemoryService memory) =>
+documentsApiGroup.MapGet("{documentId}/status", async Task<Results<Ok<DataPipelineStatus>, NotFound>> (string documentId, ApplicationMemoryService memory, string? index = null) =>
 {
-    var status = await memory.GetDocumentStatusAsync(documentId);
+    var status = await memory.GetDocumentStatusAsync(documentId, index);
     if (status is null)
     {
         return TypedResults.NotFound();
@@ -124,16 +127,16 @@ documentsApiGroup.MapGet("{documentId}/status", async Task<Results<Ok<DataPipeli
 .WithName("GetDocumentStatus")
 .WithOpenApi();
 
-documentsApiGroup.MapDelete("{documentId}", async (string documentId, ApplicationMemoryService memory) =>
+documentsApiGroup.MapDelete("{documentId}", async (string documentId, ApplicationMemoryService memory, string? index = null) =>
 {
-    await memory.DeleteDocumentAsync(documentId);
+    await memory.DeleteDocumentAsync(documentId, index);
     return TypedResults.NoContent();
 })
 .WithOpenApi();
 
-documentsApiGroup.MapPost("ask", async Task<Results<Ok<MemoryResponse>, NotFound>> (Question question, ApplicationMemoryService memory) =>
+app.MapPost("/api/ask", async Task<Results<Ok<MemoryResponse>, NotFound>> (Question question, ApplicationMemoryService memory, string? index = null) =>
 {
-    var response = await memory.AskQuestionAsync(question);
+    var response = await memory.AskQuestionAsync(question, index);
     if (response is null)
     {
         return TypedResults.NotFound();

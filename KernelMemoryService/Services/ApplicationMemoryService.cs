@@ -5,29 +5,28 @@ namespace KernelMemoryService.Services;
 
 public class ApplicationMemoryService(IKernelMemory memory, ChatService chatService)
 {
-    public async Task<string> ImportAsync(Stream content, string name, string? documentId)
+    public async Task<string> ImportAsync(Stream content, string? name = null, string? documentId = null, string? index = null)
     {
-        documentId = await memory.ImportDocumentAsync(content, name, documentId);
+        documentId = await memory.ImportDocumentAsync(content, name, documentId, index: index);
         return documentId;
     }
 
-    public async Task<DataPipelineStatus?> GetDocumentStatusAsync(string documentId)
+    public async Task<DataPipelineStatus?> GetDocumentStatusAsync(string documentId, string? index = null)
     {
-        var status = await memory.GetDocumentStatusAsync(documentId);
+        var status = await memory.GetDocumentStatusAsync(documentId, index);
         return status;
     }
 
-    public async Task DeleteDocumentAsync(string documentId)
-        => await memory.DeleteDocumentAsync(documentId);
+    public async Task DeleteDocumentAsync(string documentId, string? index = null)
+        => await memory.DeleteDocumentAsync(documentId, index);
 
-    public async Task<MemoryResponse?> AskQuestionAsync(Question question)
+    public async Task<MemoryResponse?> AskQuestionAsync(Question question, string? index = null)
     {
         // Reformulate the following question taking into account the context of the chat to perform keyword search and embeddings:
         var reformulatedQuestion = await chatService.CreateQuestionAsync(question.ConversationId, question.Text);
 
         // Ask using the embedding search via kernel memory and the reformulated question.
-        var answer = await memory.AskAsync(reformulatedQuestion, minRelevance: 0.76);
-        // var answer2 = await memory.AskAsync("what's the project timeline?", filter: new MemoryFilter().ByTag("user", "Blake"));
+        var answer = await memory.AskAsync(reformulatedQuestion, index, minRelevance: 0.76);
 
         if (answer.NoResult == false)
         {
