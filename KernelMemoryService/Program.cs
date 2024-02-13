@@ -4,6 +4,7 @@ using KernelMemoryService.Settings;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.KernelMemory;
+using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Microsoft.SemanticKernel;
 using MinimalHelpers.OpenApi;
@@ -71,6 +72,7 @@ builder.Services.AddSwaggerGen(options =>
 
     options.AddDefaultResponse();
     options.AddFormFile();
+    options.MapType<Tag>(() => new() { Type = "string", Default = new OpenApiString(string.Empty) });
 });
 
 builder.Services.AddDefaultProblemDetails();
@@ -112,7 +114,7 @@ documentsApiGroup.MapPost(string.Empty, async (IFormFile file, ApplicationMemory
 
     documentId.Description = "The unique identifier of the document. If not provided, a new one will be generated. If you specify an existing documentId, the document will be overridden.";
     index.Description = "The index to use for the document. If not provided, the default index will be used ('default').";
-    tags.Description = "The tags to associate with the document. Use the format 'tagName=tagValue' to define a tag (i.e. '?tag=userId:42&tag=city:Taggia').";
+    tags.Description = "The tags to associate with the document. Use the format 'tagName=tagValue' to define a tag (i.e. ?tag=userId:42&tag=city:Taggia).";
 
     return operation;
 })
