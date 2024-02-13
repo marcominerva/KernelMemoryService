@@ -2,6 +2,7 @@ using KernelMemoryService.Models;
 using KernelMemoryService.Services;
 using KernelMemoryService.Settings;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.KernelMemory;
 using Microsoft.OpenApi.Models;
 using Microsoft.SemanticKernel;
@@ -96,7 +97,7 @@ if (app.Environment.IsDevelopment())
 
 var documentsApiGroup = app.MapGroup("/api/documents");
 
-documentsApiGroup.MapPost(string.Empty, async (IFormFile file, ApplicationMemoryService memory, LinkGenerator linkGenerator, string? documentId = null, string? index = null) =>
+documentsApiGroup.MapPost(string.Empty, async (IFormFile file, ApplicationMemoryService memory, LinkGenerator linkGenerator, string? documentId = null, string? index = null, [FromQuery(Name = "tag")] Tag[]? tags = null) =>
 {
     documentId = await memory.ImportAsync(file.OpenReadStream(), file.FileName, documentId, index);
     var uri = linkGenerator.GetPathByName("GetDocumentStatus", new { documentId });
@@ -107,12 +108,15 @@ documentsApiGroup.MapPost(string.Empty, async (IFormFile file, ApplicationMemory
 {
     var documentId = operation.Parameters.First(p => p.Name == "documentId");
     var index = operation.Parameters.First(p => p.Name == "index");
+    var tags = operation.Parameters.First(p => p.Name == "tag");
 
     documentId.Description = "The unique identifier of the document. If not provided, a new one will be generated. If you specify an existing documentId, the document will be overridden.";
     index.Description = "The index to use for the document. If not provided, the default index will be used ('default').";
+    tags.Description = "The tags to associate with the document. Use the format 'tagName=tagValue' to define a tag (i.e. '?tag=userId:42&tag=city:Taggia').";
 
     return operation;
-});
+})
+;
 
 documentsApiGroup.MapGet("{documentId}/status", async Task<Results<Ok<DataPipelineStatus>, NotFound>> (string documentId, ApplicationMemoryService memory, string? index = null) =>
 {
