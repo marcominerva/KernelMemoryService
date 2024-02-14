@@ -36,7 +36,7 @@ The Service automatically handles this scenario by using a Memory Cache and a **
 > **Note**
 This isn't the only way to keep track of the conversation context. The Service uses an explicit approach to make it clear how the workflow should work.
 
-Two settings in [appsettings.json file](https://github.com/marcominerva/KernelMemoryService/blob/master/KernelMemoryService/appsettings.json) are used to limit the chat cache:
+Two settings in [appsettings.json file](https://github.com/marcominerva/KernelMemoryService/blob/master/KernelMemoryService/appsettings.json) are used to configure the cache:
 
 - _MessageLimit_: specifies how many messages for each conversation must be saved. When this limit is reached, oldest messages are automatically removed.
 - _MessageExpiration_: specifies the time interval used to maintain messages in cache, regardless their count.
