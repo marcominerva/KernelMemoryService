@@ -8,7 +8,6 @@ using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Microsoft.SemanticKernel;
 using MinimalHelpers.OpenApi;
-using TinyHelpers.AspNetCore.ExceptionHandlers;
 using TinyHelpers.AspNetCore.Extensions;
 using TinyHelpers.AspNetCore.Swagger;
 
@@ -131,18 +130,30 @@ documentsApiGroup.MapGet("{documentId}/status", async Task<Results<Ok<DataPipeli
     return TypedResults.Ok(status);
 })
 .WithName("GetDocumentStatus")
-.WithOpenApi();
+.WithOpenApi(operation =>
+{
+    var index = operation.Parameters.First(p => p.Name == "index");
+    index.Description = "The index that contains the document. If not provided, the default index will be used ('default').";
+
+    return operation;
+});
 
 documentsApiGroup.MapDelete("{documentId}", async (string documentId, ApplicationMemoryService memory, string? index = null) =>
 {
     await memory.DeleteDocumentAsync(documentId, index);
     return TypedResults.NoContent();
 })
-.WithOpenApi();
-
-app.MapPost("/api/ask", async Task<Results<Ok<MemoryResponse>, NotFound>> (Question question, ApplicationMemoryService memory, string? index = null) =>
+.WithOpenApi(operation =>
 {
-    var response = await memory.AskQuestionAsync(question, index);
+    var index = operation.Parameters.First(p => p.Name == "index");
+    index.Description = "The index that contains the document. If not provided, the default index will be used ('default').";
+
+    return operation;
+});
+
+app.MapPost("/api/ask", async Task<Results<Ok<MemoryResponse>, NotFound>> (Question question, ApplicationMemoryService memory, double minimumRelevance = 0.76, string? index = null) =>
+{
+    var response = await memory.AskQuestionAsync(question, minimumRelevance, index);
     if (response is null)
     {
         return TypedResults.NotFound();
@@ -154,6 +165,12 @@ app.MapPost("/api/ask", async Task<Results<Ok<MemoryResponse>, NotFound>> (Quest
 {
     operation.Summary = "Ask a question to the Kernel Memory Service";
     operation.Description = "Ask a question to the Kernel Memory Service using the provided question and optional tags. The question will be reformulated taking into account the context of the chat identified by the given ConversationId. If tags are provided, they will be used as filters with OR logic.";
+
+    var minimumRelevance = operation.Parameters.First(p => p.Name == "minimumRelevance");
+    var index = operation.Parameters.First(p => p.Name == "index");
+
+    minimumRelevance.Description = "The minimum Cosine Similarity required.";
+    index.Description = "The index in which to search for documents. If not provided, the default index will be used ('default').";
 
     return operation;
 });
