@@ -72,7 +72,7 @@ builder.Services.AddSwaggerGen(options =>
 
     options.AddDefaultResponse();
     options.AddFormFile();
-    options.MapType<Tag>(() => new() { Type = "string", Default = new OpenApiString(string.Empty) });
+    options.MapType<UploadTag>(() => new() { Type = "string", Default = new OpenApiString("Name:Value") });
 });
 
 builder.Services.AddDefaultProblemDetails();
@@ -99,9 +99,9 @@ if (app.Environment.IsDevelopment())
 
 var documentsApiGroup = app.MapGroup("/api/documents");
 
-documentsApiGroup.MapPost(string.Empty, async (IFormFile file, ApplicationMemoryService memory, LinkGenerator linkGenerator, string? documentId = null, string? index = null, [FromQuery(Name = "tag")] Tag[]? tags = null) =>
+documentsApiGroup.MapPost(string.Empty, async (IFormFile file, ApplicationMemoryService memory, LinkGenerator linkGenerator, string? documentId = null, [FromQuery(Name = "tag")] UploadTag[]? tags = null, string? index = null) =>
 {
-    documentId = await memory.ImportAsync(file.OpenReadStream(), file.FileName, documentId, index);
+    documentId = await memory.ImportAsync(file.OpenReadStream(), file.FileName, documentId, tags, index);
     var uri = linkGenerator.GetPathByName("GetDocumentStatus", new { documentId });
     return TypedResults.Accepted(uri, new UploadDocumentResponse(documentId));
 })
@@ -150,6 +150,12 @@ app.MapPost("/api/ask", async Task<Results<Ok<MemoryResponse>, NotFound>> (Quest
 
     return TypedResults.Ok(response);
 })
-.WithOpenApi();
+.WithOpenApi(operation =>
+{
+    operation.Summary = "Ask a question to the Kernel Memory Service";
+    operation.Description = "Ask a question to the Kernel Memory Service using the provided question and optional tags. The question will be reformulated taking into account the context of the chat identified by the given ConversationId. If tags are provided, they will be used as filters with OR logic.";
+
+    return operation;
+});
 
 app.Run();

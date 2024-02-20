@@ -1,13 +1,14 @@
-﻿using KernelMemoryService.Models;
+﻿using KernelMemoryService.Extensions;
+using KernelMemoryService.Models;
 using Microsoft.KernelMemory;
 
 namespace KernelMemoryService.Services;
 
 public class ApplicationMemoryService(IKernelMemory memory, ChatService chatService)
 {
-    public async Task<string> ImportAsync(Stream content, string? name = null, string? documentId = null, string? index = null)
+    public async Task<string> ImportAsync(Stream content, string? name = null, string? documentId = null, IEnumerable<UploadTag>? tags = null, string? index = null)
     {
-        documentId = await memory.ImportDocumentAsync(content, name, documentId, index: index);
+        documentId = await memory.ImportDocumentAsync(content, name, documentId, tags.ToTagCollection(), index);
         return documentId;
     }
 
@@ -25,8 +26,12 @@ public class ApplicationMemoryService(IKernelMemory memory, ChatService chatServ
         // Reformulate the following question taking into account the context of the chat to perform keyword search and embeddings:
         var reformulatedQuestion = await chatService.CreateQuestionAsync(question.ConversationId, question.Text);
 
-        // Ask using the embedding search via kernel memory and the reformulated question.
-        var answer = await memory.AskAsync(reformulatedQuestion, index, minRelevance: 0.76);
+        // Ask using the embedding search via Kernel Memory and the reformulated question.
+        // If tags are provided, use them as filters with OR logic.
+        var answer = await memory.AskAsync(reformulatedQuestion, index, filters: question.Tags.ToMemoryFilters(), minRelevance: 0.76);
+
+        // If you want to use an AND logic, just set the "filter" parameter (instead of "filters").
+        //var answer = await memory.AskAsync(reformulatedQuestion, index, filter: question.Tags.ToMemoryFilter(), minRelevance: 0.76);
 
         if (answer.NoResult == false)
         {
