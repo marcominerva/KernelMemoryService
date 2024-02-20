@@ -2,7 +2,9 @@ using KernelMemoryService.Models;
 using KernelMemoryService.Services;
 using KernelMemoryService.Settings;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.KernelMemory;
+using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Microsoft.SemanticKernel;
 using MinimalHelpers.OpenApi;
@@ -70,6 +72,7 @@ builder.Services.AddSwaggerGen(options =>
 
     options.AddDefaultResponse();
     options.AddFormFile();
+    options.MapType<UploadTag>(() => new() { Type = "string", Default = new OpenApiString("Name:Value") });
 });
 
 builder.Services.AddDefaultProblemDetails();
@@ -96,9 +99,9 @@ if (app.Environment.IsDevelopment())
 
 var documentsApiGroup = app.MapGroup("/api/documents");
 
-documentsApiGroup.MapPost(string.Empty, async (IFormFile file, ApplicationMemoryService memory, LinkGenerator linkGenerator, string? documentId = null, string? index = null) =>
+documentsApiGroup.MapPost(string.Empty, async (IFormFile file, ApplicationMemoryService memory, LinkGenerator linkGenerator, string? documentId = null, [FromQuery(Name = "tag")] UploadTag[]? tags = null, string? index = null) =>
 {
-    documentId = await memory.ImportAsync(file.OpenReadStream(), file.FileName, documentId, index);
+    documentId = await memory.ImportAsync(file.OpenReadStream(), file.FileName, documentId, tags, index);
     var uri = linkGenerator.GetPathByName("GetDocumentStatus", new { documentId });
     return TypedResults.Accepted(uri, new UploadDocumentResponse(documentId));
 })
@@ -107,12 +110,15 @@ documentsApiGroup.MapPost(string.Empty, async (IFormFile file, ApplicationMemory
 {
     var documentId = operation.Parameters.First(p => p.Name == "documentId");
     var index = operation.Parameters.First(p => p.Name == "index");
+    var tags = operation.Parameters.First(p => p.Name == "tag");
 
     documentId.Description = "The unique identifier of the document. If not provided, a new one will be generated. If you specify an existing documentId, the document will be overridden.";
     index.Description = "The index to use for the document. If not provided, the default index will be used ('default').";
+    tags.Description = "The tags to associate with the document. Use the format 'tagName=tagValue' to define a tag (i.e. ?tag=userId:42&tag=city:Taggia).";
 
     return operation;
-});
+})
+;
 
 documentsApiGroup.MapGet("{documentId}/status", async Task<Results<Ok<DataPipelineStatus>, NotFound>> (string documentId, ApplicationMemoryService memory, string? index = null) =>
 {
@@ -144,6 +150,12 @@ app.MapPost("/api/ask", async Task<Results<Ok<MemoryResponse>, NotFound>> (Quest
 
     return TypedResults.Ok(response);
 })
-.WithOpenApi();
+.WithOpenApi(operation =>
+{
+    operation.Summary = "Ask a question to the Kernel Memory Service";
+    operation.Description = "Ask a question to the Kernel Memory Service using the provided question and optional tags. The question will be reformulated taking into account the context of the chat identified by the given ConversationId. If tags are provided, they will be used as filters with OR logic.";
+
+    return operation;
+});
 
 app.Run();
