@@ -1,3 +1,4 @@
+using KernelMemoryService.Extensions;
 using KernelMemoryService.Models;
 using KernelMemoryService.Services;
 using KernelMemoryService.Settings;
@@ -21,6 +22,7 @@ var appSettings = builder.Services.ConfigureAndGet<AppSettings>(builder.Configur
 builder.Services.AddMemoryCache();
 
 var kernelMemory = new KernelMemoryBuilder(builder.Services)
+    .WithDefaultHostedHandlers(builder.Services)
     .WithAzureOpenAITextEmbeddingGeneration(new()
     {
         APIKey = aiSettings.Embedding.ApiKey,
