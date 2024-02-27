@@ -30,11 +30,12 @@ public class ApplicationMemoryService(IKernelMemory memory, ChatService chatServ
         // If tags are provided, use them as filters with OR logic.
         var answer = await memory.AskAsync(reformulatedQuestion, index, filters: question.Tags.ToMemoryFilters(), minRelevance: minimumRelevance);
 
-        // If you want to use an AND logic, just set the "filter" parameter (instead of "filters").
+        // If you want to use an AND logic, set the "filter" parameter (instead of "filters").
         //var answer = await memory.AskAsync(reformulatedQuestion, index, filter: question.Tags.ToMemoryFilter(), minRelevance: minimumRelevance);
 
         if (answer.NoResult == false)
         {
+            // If the answer has been found, add the interaction to the chat, so that it will be used for the next reformulation.
             await chatService.AddInteractionAsync(question.ConversationId, question.Text, answer.Result);
 
             var response = new MemoryResponse(answer.Result, answer.RelevantSources);
