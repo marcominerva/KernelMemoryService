@@ -2,4 +2,4 @@
 
 namespace KernelMemoryService.Models;
 
-public record class MemoryResponse(string Answer, IEnumerable<Citation> Citations);
+public record class MemoryResponse(string Question, string Answer, IEnumerable<Citation> Citations);

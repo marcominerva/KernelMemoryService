@@ -38,7 +38,7 @@ public class ApplicationMemoryService(IKernelMemory memory, ChatService chatServ
             // If the answer has been found, add the interaction to the chat, so that it will be used for the next reformulation.
             await chatService.AddInteractionAsync(question.ConversationId, question.Text, answer.Result);
 
-            var response = new MemoryResponse(answer.Result, answer.RelevantSources);
+            var response = new MemoryResponse(reformulatedQuestion, answer.Result, answer.RelevantSources);
             return response;
         }
 
