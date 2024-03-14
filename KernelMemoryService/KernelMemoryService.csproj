@@ -8,7 +8,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.3" />
-		<PackageReference Include="Microsoft.KernelMemory.Core" Version="0.33.240312.1" />
+		<PackageReference Include="Microsoft.KernelMemory.Core" Version="0.34.240313.1" />
 		<PackageReference Include="MinimalHelpers.OpenApi" Version="2.0.3" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
 		<PackageReference Include="TinyHelpers" Version="3.1.2" />
