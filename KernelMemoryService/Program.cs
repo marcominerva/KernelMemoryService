@@ -28,6 +28,7 @@ var kernelMemory = new KernelMemoryBuilder(builder.Services)
         Endpoint = aiSettings.Embedding.Endpoint,
         APIType = AzureOpenAIConfig.APITypes.EmbeddingGeneration,
         Auth = AzureOpenAIConfig.AuthTypes.APIKey,
+        MaxTokenTotal = aiSettings.Embedding.MaxTokens
     })
     .WithAzureOpenAITextGeneration(new()
     {
@@ -35,14 +36,15 @@ var kernelMemory = new KernelMemoryBuilder(builder.Services)
         Deployment = aiSettings.ChatCompletion.Deployment,
         Endpoint = aiSettings.ChatCompletion.Endpoint,
         APIType = AzureOpenAIConfig.APITypes.ChatCompletion,
-        Auth = AzureOpenAIConfig.AuthTypes.APIKey
+        Auth = AzureOpenAIConfig.AuthTypes.APIKey,
+        MaxTokenTotal = aiSettings.ChatCompletion.MaxTokens
     })
     .WithSimpleFileStorage(appSettings.StoragePath)
     .WithSimpleVectorDb(appSettings.VectorDbPath)
     .WithSearchClientConfig(new()
     {
         EmptyAnswer = "I'm sorry, I haven't found any relevant information that can be used to answer your question",
-        MaxMatchesCount = 10,
+        MaxMatchesCount = 25,
         AnswerTokens = 800
     })
     .WithCustomTextPartitioningOptions(new()
@@ -151,9 +153,28 @@ documentsApiGroup.MapDelete("{documentId}", async (string documentId, Applicatio
     return operation;
 });
 
-app.MapPost("/api/ask", async Task<Results<Ok<MemoryResponse>, NotFound>> (Question question, ApplicationMemoryService memory, double minimumRelevance = 0.76, string? index = null) =>
+app.MapPost("/api/search", async (Search search, ApplicationMemoryService memory, double minimumRelevance = 0, string? index = null) =>
 {
-    var response = await memory.AskQuestionAsync(question, minimumRelevance, index);
+    var response = await memory.SearchAsync(search, minimumRelevance, index);
+    return TypedResults.Ok(response);
+})
+.WithOpenApi(operation =>
+{
+    operation.Summary = "Search into Kernel Memory";
+    operation.Description = "Search into Kernel Memory using the provided question and optional tags. If tags are provided, they will be used as filters with OR logic.";
+
+    var minimumRelevance = operation.Parameters.First(p => p.Name == "minimumRelevance");
+    var index = operation.Parameters.First(p => p.Name == "index");
+
+    minimumRelevance.Description = "The minimum Cosine Similarity required.";
+    index.Description = "The index in which to search for documents. If not provided, the default index will be used ('default').";
+
+    return operation;
+});
+
+app.MapPost("/api/ask", async Task<Results<Ok<MemoryResponse>, NotFound>> (Question question, ApplicationMemoryService memory, bool reformulate = true, double minimumRelevance = 0, string? index = null) =>
+{
+    var response = await memory.AskQuestionAsync(question, reformulate, minimumRelevance, index);
     if (response is null)
     {
         return TypedResults.NotFound();
@@ -166,9 +187,11 @@ app.MapPost("/api/ask", async Task<Results<Ok<MemoryResponse>, NotFound>> (Quest
     operation.Summary = "Ask a question to the Kernel Memory Service";
     operation.Description = "Ask a question to the Kernel Memory Service using the provided question and optional tags. The question will be reformulated taking into account the context of the chat identified by the given ConversationId. If tags are provided, they will be used as filters with OR logic.";
 
+    var reformulate = operation.Parameters.First(p => p.Name == "reformulate");
     var minimumRelevance = operation.Parameters.First(p => p.Name == "minimumRelevance");
     var index = operation.Parameters.First(p => p.Name == "index");
 
+    reformulate.Description = "If true, the question will be reformulated taking into account the context of the chat identified by the given ConversationId.";
     minimumRelevance.Description = "The minimum Cosine Similarity required.";
     index.Description = "The index in which to search for documents. If not provided, the default index will be used ('default').";
 

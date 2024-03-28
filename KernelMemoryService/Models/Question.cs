@@ -1,3 +1,3 @@
 ﻿namespace KernelMemoryService.Models;
 
-public record Question(Guid ConversationId, string Text, IEnumerable<Tag> Tags);
+public record Question(Guid ConversationId, string Text, IEnumerable<Tag> Tags) : Search(Text, Tags);
