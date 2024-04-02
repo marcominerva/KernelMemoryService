@@ -109,13 +109,12 @@ documentsApiGroup.MapPost(string.Empty, async (IFormFile file, ApplicationMemory
 .DisableAntiforgery()
 .WithOpenApi(operation =>
 {
-    var documentId = operation.Parameters.First(p => p.Name == "documentId");
-    var index = operation.Parameters.First(p => p.Name == "index");
-    var tags = operation.Parameters.First(p => p.Name == "tag");
+    operation.Summary = "Upload a document to Kernel Memory";
+    operation.Description = "Upload a document to Kernel Memory. The document will be indexed and used to answer questions. The documentId is optional, if not provided a new one will be generated. If you specify an existing documentId, the document will be overridden. You can also specify tags to associate with the document.";
 
-    documentId.Description = "The unique identifier of the document. If not provided, a new one will be generated. If you specify an existing documentId, the document will be overridden.";
-    index.Description = "The index to use for the document. If not provided, the default index will be used ('default').";
-    tags.Description = "The tags to associate with the document. Use the format 'tagName=tagValue' to define a tag (i.e. ?tag=userId:42&tag=city:Taggia).";
+    operation.Parameters.GetByName("documentId").Description = "The unique identifier of the document. If not provided, a new one will be generated. If you specify an existing documentId, the document will be overridden.";
+    operation.Parameters.GetByName("index").Description = "The index to use for the document. If not provided, the default index will be used ('default').";
+    operation.Parameters.GetByName("tag").Description = "The tags to associate with the document. Use the format 'tagName=tagValue' to define a tag (i.e. ?tag=userId:42&tag=city:Taggia).";
 
     return operation;
 })
@@ -134,8 +133,9 @@ documentsApiGroup.MapGet("{documentId}/status", async Task<Results<Ok<DataPipeli
 .WithName("GetDocumentStatus")
 .WithOpenApi(operation =>
 {
-    var index = operation.Parameters.First(p => p.Name == "index");
-    index.Description = "The index that contains the document. If not provided, the default index will be used ('default').";
+    operation.Summary = "Get the ingestion status of a document";
+
+    operation.Parameters.GetByName("index").Description = "The index that contains the document. If not provided, the default index will be used ('default').";
 
     return operation;
 });
@@ -147,8 +147,9 @@ documentsApiGroup.MapDelete("{documentId}", async (string documentId, Applicatio
 })
 .WithOpenApi(operation =>
 {
-    var index = operation.Parameters.First(p => p.Name == "index");
-    index.Description = "The index that contains the document. If not provided, the default index will be used ('default').";
+    operation.Summary = "Delete a document from Kernel Memory";
+
+    operation.Parameters.GetByName("index").Description = "The index that contains the document. If not provided, the default index will be used ('default').";
 
     return operation;
 });
@@ -163,11 +164,8 @@ app.MapPost("/api/search", async (Search search, ApplicationMemoryService memory
     operation.Summary = "Search into Kernel Memory";
     operation.Description = "Search into Kernel Memory using the provided question and optional tags. If tags are provided, they will be used as filters with OR logic.";
 
-    var minimumRelevance = operation.Parameters.First(p => p.Name == "minimumRelevance");
-    var index = operation.Parameters.First(p => p.Name == "index");
-
-    minimumRelevance.Description = "The minimum Cosine Similarity required.";
-    index.Description = "The index in which to search for documents. If not provided, the default index will be used ('default').";
+    operation.Parameters.GetByName("minimumRelevance").Description = "The minimum Cosine Similarity required.";
+    operation.Parameters.GetByName("index").Description = "The index in which to search for documents. If not provided, the default index will be used ('default').";
 
     return operation;
 });
@@ -187,13 +185,9 @@ app.MapPost("/api/ask", async Task<Results<Ok<MemoryResponse>, NotFound>> (Quest
     operation.Summary = "Ask a question to the Kernel Memory Service";
     operation.Description = "Ask a question to the Kernel Memory Service using the provided question and optional tags. The question will be reformulated taking into account the context of the chat identified by the given ConversationId. If tags are provided, they will be used as filters with OR logic.";
 
-    var reformulate = operation.Parameters.First(p => p.Name == "reformulate");
-    var minimumRelevance = operation.Parameters.First(p => p.Name == "minimumRelevance");
-    var index = operation.Parameters.First(p => p.Name == "index");
-
-    reformulate.Description = "If true, the question will be reformulated taking into account the context of the chat identified by the given ConversationId.";
-    minimumRelevance.Description = "The minimum Cosine Similarity required.";
-    index.Description = "The index in which to search for documents. If not provided, the default index will be used ('default').";
+    operation.Parameters.GetByName("reformulate").Description = "If true, the question will be reformulated taking into account the context of the chat identified by the given ConversationId.";
+    operation.Parameters.GetByName("minimumRelevance").Description = "The minimum Cosine Similarity required.";
+    operation.Parameters.GetByName("index").Description = "The index in which to search for documents. If not provided, the default index will be used ('default').";
 
     return operation;
 });
