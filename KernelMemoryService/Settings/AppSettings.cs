@@ -1,4 +1,4 @@
-﻿namespace KernelMemoryService.Services;
+﻿namespace KernelMemoryService.Settings;
 
 public class AppSettings
 {
