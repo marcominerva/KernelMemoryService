@@ -21,6 +21,14 @@ var appSettings = builder.Services.ConfigureAndGet<AppSettings>(builder.Configur
 builder.Services.AddMemoryCache();
 
 var kernelMemory = new KernelMemoryBuilder(builder.Services)
+    // Customize the pipeline to automatically delete files generated during the ingestion process.
+    //.With(new KernelMemoryConfig
+    //{
+    //    DataIngestion = new KernelMemoryConfig.DataIngestionConfig
+    //    {
+    //        DefaultSteps = [.. Constants.DefaultPipeline, Constants.PipelineStepsDeleteGeneratedFiles]
+    //    }
+    //})
     .WithAzureOpenAITextEmbeddingGeneration(new()
     {
         APIKey = aiSettings.Embedding.ApiKey,
