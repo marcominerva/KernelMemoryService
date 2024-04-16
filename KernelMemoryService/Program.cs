@@ -20,16 +20,9 @@ var appSettings = builder.Services.ConfigureAndGet<AppSettings>(builder.Configur
 
 builder.Services.AddMemoryCache();
 
-var kernelMemory = new KernelMemoryBuilder(builder.Services)
-    // Customize the pipeline to automatically delete files generated during the ingestion process.
-    //.With(new KernelMemoryConfig
-    //{
-    //    DataIngestion = new KernelMemoryConfig.DataIngestionConfig
-    //    {
-    //        DefaultSteps = [.. Constants.DefaultPipeline, Constants.PipelineStepsDeleteGeneratedFiles]
-    //    }
-    //})
-    .WithAzureOpenAITextEmbeddingGeneration(new()
+builder.Services.AddKernelMemory(options =>
+{
+    options.WithAzureOpenAITextEmbeddingGeneration(new()
     {
         APIKey = aiSettings.Embedding.ApiKey,
         Deployment = aiSettings.Embedding.Deployment,
@@ -47,8 +40,6 @@ var kernelMemory = new KernelMemoryBuilder(builder.Services)
         Auth = AzureOpenAIConfig.AuthTypes.APIKey,
         MaxTokenTotal = aiSettings.ChatCompletion.MaxTokens
     })
-    .WithSimpleFileStorage(appSettings.StoragePath)
-    .WithSimpleVectorDb(appSettings.VectorDbPath)
     .WithSearchClientConfig(new()
     {
         EmptyAnswer = "I'm sorry, I haven't found any relevant information that can be used to answer your question",
@@ -61,11 +52,19 @@ var kernelMemory = new KernelMemoryBuilder(builder.Services)
         MaxTokensPerLine = 300,
         OverlappingTokens = 100
     })
+    // Customize the pipeline to automatically delete files generated during the ingestion process.
+    //.With(new KernelMemoryConfig
+    //{
+    //    DataIngestion = new KernelMemoryConfig.DataIngestionConfig
+    //    {
+    //        DefaultSteps = [.. Constants.DefaultPipeline, Constants.PipelineStepsDeleteGeneratedFiles]
+    //    }
+    //})
+    .WithSimpleFileStorage(appSettings.StoragePath)
+    .WithSimpleVectorDb(appSettings.VectorDbPath)
     // Configure the asynchronous memory.
-    .WithSimpleQueuesPipeline(appSettings.QueuePath)
-    .Build<MemoryService>();  // Asynchronous memory with pipelines.
-
-builder.Services.AddSingleton<IKernelMemory>(kernelMemory);
+    .WithSimpleQueuesPipeline(appSettings.QueuePath);
+});
 
 // Semantical Kernel is used to reformulate questions taking into account all the previous interactions, so that embeddings can be generate more accurately.
 var kernelBuilder = builder.Services.AddKernel()
