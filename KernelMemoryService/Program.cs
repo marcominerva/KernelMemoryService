@@ -67,7 +67,7 @@ builder.Services.AddKernelMemory(options =>
 });
 
 // Semantical Kernel is used to reformulate questions taking into account all the previous interactions, so that embeddings can be generate more accurately.
-var kernelBuilder = builder.Services.AddKernel()
+builder.Services.AddKernel()
     .AddAzureOpenAIChatCompletion(aiSettings.ChatCompletion.Deployment, aiSettings.ChatCompletion.Endpoint, aiSettings.ChatCompletion.ApiKey);
 
 builder.Services.AddScoped<ChatService>();
