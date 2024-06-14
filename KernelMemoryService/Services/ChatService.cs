@@ -46,7 +46,7 @@ public class ChatService(IMemoryCache cache, IChatCompletionService chatCompleti
             chat = new ChatHistory(chat.TakeLast(appSettingsOptions.Value.MessageLimit));
         }
 
-        cache.Set(conversationId, chat);
+        cache.Set(conversationId, chat, appSettingsOptions.Value.MessageExpiration);
 
         return Task.CompletedTask;
     }
