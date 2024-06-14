@@ -47,7 +47,7 @@ public class ApplicationMemoryService(IKernelMemory memory, ChatService chatServ
 
     public async Task<SearchResult?> SearchAsync(Search search, double minimumRelevance = 0, string? index = null)
     {
-        // Search using the embedding search via Kernel Memory .
+        // Search using the embedding search via Kernel Memory.
         // If tags are provided, use them as filters with OR logic.
         var searchResult = await memory.SearchAsync(search.Text.TrimEnd([' ', '?']), index, filters: search.Tags.ToMemoryFilters(), minRelevance: minimumRelevance, limit: 50);
 
