@@ -124,8 +124,7 @@ documentsApiGroup.MapPost(string.Empty, async (IFormFile file, ApplicationMemory
     operation.Parameter("tag").Description = "The tags to associate with the document. Use the format 'tagName=tagValue' to define a tag (i.e. ?tag=userId:42&tag=city:Taggia).";
 
     return operation;
-})
-;
+});
 
 documentsApiGroup.MapGet("{documentId}/status", async Task<Results<Ok<DataPipelineStatus>, NotFound>> (string documentId, ApplicationMemoryService memory, string? index = null) =>
 {
