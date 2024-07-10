@@ -7,11 +7,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.6" />
-		<PackageReference Include="Microsoft.KernelMemory.Core" Version="0.65.240620.1" />
-		<PackageReference Include="MinimalHelpers.OpenApi" Version="2.0.8" />
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.7" />
+		<PackageReference Include="Microsoft.KernelMemory.Core" Version="0.66.240709.1" />
+		<PackageReference Include="MinimalHelpers.OpenApi" Version="2.0.9" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
-		<PackageReference Include="TinyHelpers" Version="3.1.7" />
+		<PackageReference Include="TinyHelpers" Version="3.1.10" />
 		<PackageReference Include="TinyHelpers.AspNetCore" Version="3.1.6" />
 	</ItemGroup>
 
