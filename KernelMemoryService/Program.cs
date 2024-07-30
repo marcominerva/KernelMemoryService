@@ -29,7 +29,9 @@ builder.Services.AddKernelMemory(options =>
         Endpoint = aiSettings.Embedding.Endpoint,
         APIType = AzureOpenAIConfig.APITypes.EmbeddingGeneration,
         Auth = AzureOpenAIConfig.AuthTypes.APIKey,
-        MaxTokenTotal = aiSettings.Embedding.MaxTokens
+        MaxTokenTotal = aiSettings.Embedding.MaxTokens,
+        MaxEmbeddingBatchSize = 16,
+        //EmbeddingDimensions = 1536
     })
     .WithAzureOpenAITextGeneration(new()
     {
@@ -57,6 +59,7 @@ builder.Services.AddKernelMemory(options =>
     //{
     //    DataIngestion = new KernelMemoryConfig.DataIngestionConfig
     //    {
+    //        //MemoryDbUpsertBatchSize = 32,
     //        DefaultSteps = [.. Constants.DefaultPipeline, Constants.PipelineStepsDeleteGeneratedFiles]
     //    }
     //})
