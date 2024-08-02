@@ -69,7 +69,7 @@ builder.Services.AddKernelMemory(options =>
     .WithSimpleQueuesPipeline(appSettings.QueuePath);
 });
 
-// Semantical Kernel is used to reformulate questions taking into account all the previous interactions, so that embeddings can be generated more accurately.
+// Semantic Kernel is used to reformulate questions taking into account all the previous interactions, so that embeddings can be generated more accurately.
 builder.Services.AddKernel()
     .AddAzureOpenAIChatCompletion(aiSettings.ChatCompletion.Deployment, aiSettings.ChatCompletion.Endpoint, aiSettings.ChatCompletion.ApiKey);
 
@@ -82,7 +82,6 @@ builder.Services.AddSwaggerGen(options =>
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Kernel Memory Service API", Version = "v1" });
 
     options.AddDefaultResponse();
-    options.AddFormFile();
     options.MapType<UploadTag>(() => new() { Type = "string", Default = new OpenApiString("Name:Value") });
 });
 
