@@ -28,10 +28,10 @@ public class ApplicationMemoryService(IKernelMemory memory, ChatService chatServ
 
         // Ask using the embedding search via Kernel Memory and the reformulated question.
         // If tags are provided, use them as filters with OR logic.
-        var answer = await memory.AskAsync(reformulatedQuestion.TrimEnd([' ', '?']), index, filters: question.Tags.ToMemoryFilters(), minRelevance: minimumRelevance);
+        var answer = await memory.AskAsync(reformulatedQuestion, index, filters: question.Tags.ToMemoryFilters(), minRelevance: minimumRelevance);
 
         // If you want to use an AND logic, set the "filter" parameter (instead of "filters").
-        //var answer = await memory.AskAsync(reformulatedQuestion.TrimEnd([' ', '?'], index, filter: question.Tags.ToMemoryFilter(), minRelevance: minimumRelevance);
+        //var answer = await memory.AskAsync(reformulatedQuestion, index, filter: question.Tags.ToMemoryFilter(), minRelevance: minimumRelevance);
 
         if (answer.NoResult == false)
         {
