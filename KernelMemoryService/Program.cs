@@ -122,7 +122,7 @@ documentsApiGroup.MapPost(string.Empty, async (IFormFile file, ApplicationMemory
 
     operation.Parameter("documentId").Description = "The unique identifier of the document. If not provided, a new one will be generated. If you specify an existing documentId, the document will be overridden.";
     operation.Parameter("index").Description = "The index to use for the document. If not provided, the default index will be used ('default').";
-    operation.Parameter("tag").Description = "The tags to associate with the document. Use the format 'tagName=tagValue' to define a tag (i.e. ?tag=userId:42&tag=city:Taggia).";
+    operation.Parameter("tag").Description = "The tags to associate with the document. Use the format 'tagName:tagValue' to define a tag (i.e. userId:42).";
 
     return operation;
 });
