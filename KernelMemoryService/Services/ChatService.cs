@@ -18,7 +18,7 @@ public class ChatService(IMemoryCache cache, IChatCompletionService chatCompleti
             ---
             {question}
             ---
-            You must reformulate the question in the same language of the user's question.
+            You must reformulate the question in the same language of the user's question. For example, it the user asks a question in English, the answer must be in English.
             Never add "in this chat", "in the context of this chat", "in the context of our conversation", "search for" or something like that in your answer.
             """;
 
