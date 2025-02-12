@@ -51,7 +51,6 @@ builder.Services.AddKernelMemory(options =>
     .WithCustomTextPartitioningOptions(new()
     {
         MaxTokensPerParagraph = 1000,
-        MaxTokensPerLine = 300,
         OverlappingTokens = 100
     })
     // Customize the pipeline to automatically delete files generated during the ingestion process.
