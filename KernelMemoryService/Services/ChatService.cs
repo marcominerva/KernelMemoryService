@@ -18,6 +18,7 @@ public class ChatService(IMemoryCache cache, IChatCompletionService chatCompleti
             ---
             {question}
             ---
+            The reformulation must always explicitly contain the subject of the question.            
             You must reformulate the question in the same language of the user's question. For example, it the user asks a question in English, the answer must be in English.
             Never add "in this chat", "in the context of this chat", "in the context of our conversation", "search for" or something like that in your answer.
             """;
@@ -46,7 +47,7 @@ public class ChatService(IMemoryCache cache, IChatCompletionService chatCompleti
     {
         if (chat.Count > appSettings.MessageLimit)
         {
-            chat = new ChatHistory(chat.TakeLast(appSettings.MessageLimit));
+            chat.RemoveRange(0, chat.Count - appSettings.MessageLimit);
         }
 
         cache.Set(conversationId, chat, appSettings.MessageExpiration);
