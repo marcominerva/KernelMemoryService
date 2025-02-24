@@ -33,16 +33,16 @@ public class ApplicationMemoryService(IKernelMemory memory, ChatService chatServ
         // If you want to use an AND logic, set the "filter" parameter (instead of "filters").
         //var answer = await memory.AskAsync(reformulatedQuestion, index, filter: question.Tags.ToMemoryFilter(), minRelevance: minimumRelevance);
 
-        if (answer.NoResult == false)
+        if (answer.NoResult != false)
         {
-            // If the answer has been found, add the interaction to the chat, so that it will be used for the next reformulation.
-            await chatService.AddInteractionAsync(question.ConversationId, reformulatedQuestion, answer.Result);
-
-            var response = new MemoryResponse(answer.Question, answer.Result, answer.RelevantSources);
-            return response;
+            return null;
         }
 
-        return null;
+        // The answer has been found: add the interaction to the chat, so that it will be used for the next reformulation.
+        await chatService.AddInteractionAsync(question.ConversationId, reformulatedQuestion, answer.Result);
+
+        var response = new MemoryResponse(answer.Question, answer.Result, answer.RelevantSources);
+        return response;
     }
 
     public async Task<SearchResult?> SearchAsync(Search search, double minimumRelevance = 0, string? index = null)
