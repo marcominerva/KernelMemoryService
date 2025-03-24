@@ -1,17 +1,17 @@
 ﻿using KernelMemoryService.Settings;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace KernelMemoryService.Services;
 
-public class ChatService(IMemoryCache cache, IChatCompletionService chatCompletionService, IOptions<AppSettings> appSettingsOptions)
+public class ChatService(IChatCompletionService chatCompletionService, HybridCache cache, IOptions<AppSettings> appSettingsOptions)
 {
     private readonly AppSettings appSettings = appSettingsOptions.Value;
 
-    public async Task<string> CreateQuestionAsync(Guid conversationId, string question)
+    public async Task<string> CreateQuestionAsync(Guid conversationId, string question, CancellationToken cancellationToken = default)
     {
-        var chat = new ChatHistory(cache.Get<ChatHistory?>(conversationId) ?? []);
+        var chat = await GetChatHistoryAsync(conversationId, cancellationToken);
 
         var embeddingQuestion = $"""
             Reformulate the following question taking into account the context of the chat to perform embeddings search:
@@ -25,33 +25,44 @@ public class ChatService(IMemoryCache cache, IChatCompletionService chatCompleti
 
         chat.AddUserMessage(embeddingQuestion);
 
-        var reformulatedQuestion = await chatCompletionService.GetChatMessageContentAsync(chat)!;
+        var reformulatedQuestion = await chatCompletionService.GetChatMessageContentAsync(chat, cancellationToken: cancellationToken)!;
         chat.AddAssistantMessage(reformulatedQuestion.Content!);
 
-        await UpdateCacheAsync(conversationId, chat);
+        await UpdateCacheAsync(conversationId, chat, cancellationToken);
 
         return reformulatedQuestion.Content!;
     }
 
-    public async Task AddInteractionAsync(Guid conversationId, string question, string answer)
-    {
-        var chat = new ChatHistory(cache.Get<ChatHistory?>(conversationId) ?? []);
-
-        chat.AddUserMessage(question);
-        chat.AddAssistantMessage(answer);
-
-        await UpdateCacheAsync(conversationId, chat);
-    }
-
-    private Task UpdateCacheAsync(Guid conversationId, ChatHistory chat)
+    public Task AddInteractionAsync(Guid conversationId, string question, string answer, CancellationToken cancellationToken = default)
+        => SetChatHistoryAsync(conversationId, question, answer, cancellationToken);
+    private async Task UpdateCacheAsync(Guid conversationId, ChatHistory chat, CancellationToken cancellationToken)
     {
         if (chat.Count > appSettings.MessageLimit)
         {
             chat.RemoveRange(0, chat.Count - appSettings.MessageLimit);
         }
 
-        cache.Set(conversationId, chat, appSettings.MessageExpiration);
+        await cache.SetAsync(conversationId.ToString(), chat, cancellationToken: cancellationToken);
+    }
 
-        return Task.CompletedTask;
+    private async Task<ChatHistory> GetChatHistoryAsync(Guid conversationId, CancellationToken cancellationToken)
+    {
+        var historyCache = await cache.GetOrCreateAsync(conversationId.ToString(), (cancellationToken) =>
+        {
+            return ValueTask.FromResult<ChatHistory>([]);
+        }, cancellationToken: cancellationToken);
+
+        var chat = new ChatHistory(historyCache);
+        return chat;
+    }
+
+    private async Task SetChatHistoryAsync(Guid conversationId, string question, string answer, CancellationToken cancellationToken)
+    {
+        var history = await GetChatHistoryAsync(conversationId, cancellationToken);
+
+        history.AddUserMessage(question);
+        history.AddAssistantMessage(answer);
+
+        await UpdateCacheAsync(conversationId, history, cancellationToken);
     }
 }

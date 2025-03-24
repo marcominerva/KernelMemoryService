@@ -18,7 +18,13 @@ builder.Configuration.AddJsonFile("appsettings.local.json", optional: true, relo
 var aiSettings = builder.Configuration.GetSection<AzureOpenAISettings>("AzureOpenAI")!;
 var appSettings = builder.Services.ConfigureAndGet<AppSettings>(builder.Configuration, nameof(AppSettings))!;
 
-builder.Services.AddMemoryCache();
+builder.Services.AddHybridCache(options =>
+{
+    options.DefaultEntryOptions = new()
+    {
+        LocalCacheExpiration = appSettings.MessageExpiration
+    };
+});
 
 builder.Services.AddKernelMemory(options =>
 {
@@ -72,15 +78,15 @@ builder.Services.AddKernelMemory(options =>
 builder.Services.AddKernel()
     .AddAzureOpenAIChatCompletion(aiSettings.ChatCompletion.Deployment, aiSettings.ChatCompletion.Endpoint, aiSettings.ChatCompletion.ApiKey);
 
-builder.Services.AddScoped<ChatService>();
-builder.Services.AddScoped<ApplicationMemoryService>();
+builder.Services.AddSingleton<ChatService>();
+builder.Services.AddSingleton<ApplicationMemoryService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Kernel Memory Service API", Version = "v1" });
 
-    options.AddDefaultResponse();
+    options.AddDefaultProblemDetailsResponse();
     options.MapType<UploadTag>(() => new() { Type = "string", Default = new OpenApiString("Name:Value") });
 });
 
@@ -107,9 +113,9 @@ if (app.Environment.IsDevelopment())
 
 var documentsApiGroup = app.MapGroup("/api/documents");
 
-documentsApiGroup.MapPost(string.Empty, async (IFormFile file, ApplicationMemoryService memory, LinkGenerator linkGenerator, string? documentId = null, [FromQuery(Name = "tag")] UploadTag[]? tags = null, string? index = null) =>
+documentsApiGroup.MapPost(string.Empty, async (IFormFile file, ApplicationMemoryService memory, LinkGenerator linkGenerator, CancellationToken cancellationToken, string? documentId = null, [FromQuery(Name = "tag")] UploadTag[]? tags = null, string? index = null) =>
 {
-    documentId = await memory.ImportAsync(file.OpenReadStream(), file.FileName, documentId, tags, index);
+    documentId = await memory.ImportAsync(file.OpenReadStream(), file.FileName, documentId, tags, index, cancellationToken);
     var uri = linkGenerator.GetPathByName("GetDocumentStatus", new { documentId });
     return TypedResults.Accepted(uri, new UploadDocumentResponse(documentId));
 })
@@ -126,9 +132,9 @@ documentsApiGroup.MapPost(string.Empty, async (IFormFile file, ApplicationMemory
     return operation;
 });
 
-documentsApiGroup.MapGet("{documentId}/status", async Task<Results<Ok<DataPipelineStatus>, NotFound>> (string documentId, ApplicationMemoryService memory, string? index = null) =>
+documentsApiGroup.MapGet("{documentId}/status", async Task<Results<Ok<DataPipelineStatus>, NotFound>> (string documentId, ApplicationMemoryService memory, CancellationToken cancellationToken, string? index = null) =>
 {
-    var status = await memory.GetDocumentStatusAsync(documentId, index);
+    var status = await memory.GetDocumentStatusAsync(documentId, index, cancellationToken);
     if (status is null)
     {
         return TypedResults.NotFound();
@@ -146,9 +152,9 @@ documentsApiGroup.MapGet("{documentId}/status", async Task<Results<Ok<DataPipeli
     return operation;
 });
 
-documentsApiGroup.MapDelete("{documentId}", async (string documentId, ApplicationMemoryService memory, string? index = null) =>
+documentsApiGroup.MapDelete("{documentId}", async (string documentId, ApplicationMemoryService memory, CancellationToken cancellationToken, string? index = null) =>
 {
-    await memory.DeleteDocumentAsync(documentId, index);
+    await memory.DeleteDocumentAsync(documentId, index, cancellationToken);
     return TypedResults.NoContent();
 })
 .WithOpenApi(operation =>
@@ -160,9 +166,9 @@ documentsApiGroup.MapDelete("{documentId}", async (string documentId, Applicatio
     return operation;
 });
 
-app.MapPost("/api/search", async (Search search, ApplicationMemoryService memory, double minimumRelevance = 0, string? index = null) =>
+app.MapPost("/api/search", async (Search search, ApplicationMemoryService memory, CancellationToken cancellationToken, double minimumRelevance = 0, string? index = null) =>
 {
-    var response = await memory.SearchAsync(search, minimumRelevance, index);
+    var response = await memory.SearchAsync(search, minimumRelevance, index, cancellationToken);
     return TypedResults.Ok(response);
 })
 .WithOpenApi(operation =>
@@ -176,9 +182,9 @@ app.MapPost("/api/search", async (Search search, ApplicationMemoryService memory
     return operation;
 });
 
-app.MapPost("/api/ask", async Task<Results<Ok<MemoryResponse>, NotFound>> (Question question, ApplicationMemoryService memory, bool reformulate = true, double minimumRelevance = 0, string? index = null) =>
+app.MapPost("/api/ask", async Task<Results<Ok<MemoryResponse>, NotFound>> (Question question, ApplicationMemoryService memory, CancellationToken cancellationToken, bool reformulate = true, double minimumRelevance = 0, string? index = null) =>
 {
-    var response = await memory.AskQuestionAsync(question, reformulate, minimumRelevance, index);
+    var response = await memory.AskQuestionAsync(question, reformulate, minimumRelevance, index, cancellationToken);
     if (response is null)
     {
         return TypedResults.NotFound();
